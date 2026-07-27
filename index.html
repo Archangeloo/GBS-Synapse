@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SYNAPSE · CoE Projetos e Automações</title>
+
+  <!-- Fontes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Ícones -->
+   <link rel="shortcut icon" href="assets/synapse_logo3.png" type="image/x-icon">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+
+<body>
+
+<canvas id="bg-canvas" style="position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none"></canvas>
+
+<!-- ── Topbar ──────────────────────────────────────────────── -->
+<header class="topbar">
+
+  <div class="tb-left">
+    <img src="assets/saint-gobain-logo.png" class="tb-logo tb-logo-sg" alt="Saint-Gobain">
+    <div class="tb-divider"></div>
+    <img src="assets/logo_gbs.png" class="tb-logo tb-logo-gbs" alt="GBS">
+    <div class="tb-divider"></div>
+    <div class="wordmark">SYNAPSE <span>CoE Projetos e Automações</span></div>
+    <div class="tb-sync" id="sync-lbl">Nenhum arquivo carregado</div>
+  </div>
+
+  <div class="tb-right">
+
+    <!-- Filtro de período (aparece após o primeiro "Gerar dashboard") -->
+    <div class="date-filter" id="date-filter" style="display: none">
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <button class="df-chip" id="dfc-month"   onclick="definirPeriodoRapido('month')">Este mês</button>
+      <button class="df-chip" id="dfc-quarter" onclick="definirPeriodoRapido('quarter')">Trimestre</button>
+      <button class="df-chip" id="dfc-year"    onclick="definirPeriodoRapido('year')">Este ano</button>
+      <span class="df-divider"></span>
+      <input type="date" id="df-from" class="df-input" onchange="aplicarFiltroData()" title="Data inicial">
+      <span style="color: rgba(255,255,255,0.5); font-size: 12px">→</span>
+      <input type="date" id="df-to"   class="df-input" onchange="aplicarFiltroData()" title="Data final">
+      <button class="df-clear" onclick="limparFiltroData()" title="Limpar período">
+        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <button class="btn btn-print" id="btn-print" onclick="window.print()" title="Exportar aba atual como PDF" style="display:none">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Exportar PDF
+    </button>
+
+    <button class="btn" onclick="definirNav('upload')">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Atualizar bases
+    </button>
+
+  </div>
+</header>
+
+<!-- ── Navegação principal ─────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-item active" id="nav-upload" onclick="definirNav('upload')">Upload</div>
+  <div class="nav-item"        id="nav-gov"    onclick="definirNav('gov')">Painel de Controle <span class="nb" id="nb-gov">—</span></div>
+  <div class="nav-item"        id="nav-proj"   onclick="definirNav('proj')">Projetos <span class="nb" id="nb-proj">—</span></div>
+  <div class="nav-item"        id="nav-mel"    onclick="definirNav('mel')">Pipefy Melhorias <span class="nb" id="nb-mel">—</span></div>
+  <div class="nav-item"        id="nav-rpa"    onclick="definirNav('rpa')">RPA &amp; Bots <span class="nb" id="nb-rpa">—</span></div>
+  <div class="nav-item"        id="nav-ana"    onclick="definirNav('ana')">Analytics <span class="nb" id="nb-ana">—</span></div>
+</nav>
+
+<main>
+
+  <!-- ── Upload ───────────────────────────────────────────── -->
+  <section class="page active" id="page-upload" style="max-width: 900px">
+
+    <div class="sh">Carregar bases de dados</div>
+
+    <div class="up-grid">
+
+      <!-- Card: Base Governança -->
+      <div class="uc" id="uc-gov">
+        <div class="uc-head">
+          <div class="uc-ico">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+          </div>
+          <div>
+            <div class="uc-title">Base Governança</div>
+            <div class="uc-sub">Pipefy Melhorias · Projetos · Analytics</div>
+          </div>
+        </div>
+        <div class="dz" id="dz-gov"
+          onclick="document.getElementById('fi-gov').click()"
+          ondragover="tratarArrastarSobreDropzone(event, 'dz-gov')"
+          ondragleave="tratarSairDropzone('dz-gov')"
+          ondrop="tratarSoltarDropzone(event, 'gov')">
+          <input type="file" id="fi-gov" accept=".xlsx,.xls" onchange="tratarMudancaArquivo(this, 'gov')">
+          <div class="dz-ico">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>
+            </svg>
+          </div>
+          <div class="dz-lbl">Clique ou arraste</div>
+          <div class="dz-sub">Base_Governanca_GBS · .xlsx</div>
+        </div>
+        <div class="fok" id="ok-gov">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span id="fn-gov">—</span>
+        </div>
+        <div class="tags" id="tg-gov"></div>
+      </div>
+
+      <!-- Card: Chamados RPA -->
+      <div class="uc" id="uc-rpa">
+        <div class="uc-head">
+          <div class="uc-ico">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><line x1="12" y1="7" x2="12" y2="11"/><circle cx="8" cy="16" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/>
+            </svg>
+          </div>
+          <div>
+            <div class="uc-title">Chamados RPA</div>
+            <div class="uc-sub">relatório_completo · export Pipefy</div>
+          </div>
+        </div>
+        <div class="dz" id="dz-rpa"
+          onclick="document.getElementById('fi-rpa').click()"
+          ondragover="tratarArrastarSobreDropzone(event, 'dz-rpa')"
+          ondragleave="tratarSairDropzone('dz-rpa')"
+          ondrop="tratarSoltarDropzone(event, 'rpa')">
+          <input type="file" id="fi-rpa" accept=".xlsx,.xls" onchange="tratarMudancaArquivo(this, 'rpa')">
+          <div class="dz-ico">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>
+            </svg>
+          </div>
+          <div class="dz-lbl">Clique ou arraste</div>
+          <div class="dz-sub">relatório_completo · .xlsx</div>
+        </div>
+        <div class="fok" id="ok-rpa">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span id="fn-rpa">—</span>
+        </div>
+        <div class="tags" id="tg-rpa"></div>
+      </div>
+
+    </div><!-- /up-grid -->
+
+    <!-- Barra de ação -->
+    <div class="abar">
+      <div id="abar-status" style="font-size: 13px; color: var(--ink3)">
+        <strong style="color: var(--ink)">0 de 2</strong> bases carregadas
+      </div>
+      <button class="btn primary" id="btn-gen" onclick="gerarDashboard()" disabled>
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        Gerar dashboard
+      </button>
+    </div>
+
+    <!-- Instruções -->
+    <div class="hint">
+      <b>Como funciona:</b> suba as duas planilhas que você já usa hoje — a app lê as abas
+      automaticamente, sem você precisar formatar nada.<br>
+      <b>Base Governança</b> — lê as abas <i>Pipefy_Melhorias</i>, <i>Projetos</i>,
+      <i>Analytics</i> e <i>Inventario_RPA</i>. O status é reconhecido pelo dicionário de dados.<br>
+      <b>Chamados RPA</b> — lê a aba <i>Report</i> (export do Pipefy do fluxo de manutenção
+      de RPA): fase atual, tipo de problema, processo (bot) e tempos por fase.
+    </div>
+
+  </section>
+
+  <!-- ── Painel de Controle ────────────────────────────────── -->
+  <section class="page" id="page-gov">
+    <div id="gov-empty" class="empty">
+      <i class="ti ti-upload"></i>
+      Carregue ao menos uma base e clique em Gerar dashboard
+    </div>
+    <div id="gov-content" style="display: none"></div>
+  </section>
+
+  <!-- ── Projetos ──────────────────────────────────────────── -->
+  <section class="page" id="page-proj">
+    <div id="proj-empty" class="empty">
+      <i class="ti ti-folders"></i>
+      Carregue a Base Governança (aba Projetos)
+    </div>
+    <div id="proj-content" style="display: none"></div>
+  </section>
+
+  <!-- ── Pipefy Melhorias ──────────────────────────────────── -->
+  <section class="page" id="page-mel">
+    <div id="mel-empty" class="empty">
+      <i class="ti ti-message-dots"></i>
+      Carregue a Base Governança (aba Pipefy_Melhorias)
+    </div>
+    <div id="mel-content" style="display: none"></div>
+  </section>
+
+  <!-- ── RPA & Bots ────────────────────────────────────────── -->
+  <section class="page" id="page-rpa">
+    <div id="rpa-empty" class="empty">
+      <i class="ti ti-robot"></i>
+      Carregue o relatório de Chamados RPA
+    </div>
+    <div id="rpa-content" style="display: none">
+      <nav class="pip-subnav">
+        <div class="pip-nav-item active" id="rnav-visao"  onclick="definirSubAbaRPA('visao')">Visão geral</div>
+        <div class="pip-nav-item"        id="rnav-bots"   onclick="definirSubAbaRPA('bots')">Top bots</div>
+        <div class="pip-nav-item"        id="rnav-prob"   onclick="definirSubAbaRPA('prob')">Tipos de problema</div>
+        <div class="pip-nav-item"        id="rnav-tempo"  onclick="definirSubAbaRPA('tempo')">Tempo de resolução</div>
+        <div class="pip-nav-item"        id="rnav-lista"  onclick="definirSubAbaRPA('lista')">Chamados</div>
+        <div class="pip-nav-item"        id="rnav-inv"    onclick="definirSubAbaRPA('inv')">Inventário de bots</div>
+      </nav>
+      <div id="rpage-visao"  class="pip-sub-page active"></div>
+      <div id="rpage-bots"   class="pip-sub-page"></div>
+      <div id="rpage-prob"   class="pip-sub-page"></div>
+      <div id="rpage-tempo"  class="pip-sub-page"></div>
+      <div id="rpage-lista"  class="pip-sub-page"></div>
+      <div id="rpage-inv"    class="pip-sub-page">
+        <div id="bots-empty" class="empty">
+          <i class="ti ti-list-check"></i>
+          Carregue o Inventário RPA (aba Inventario_RPA da Base Governança)
+        </div>
+        <div id="bots-content" style="display: none"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Analytics ─────────────────────────────────────────── -->
+  <section class="page" id="page-ana">
+    <div id="ana-empty" class="empty">
+      <i class="ti ti-chart-dots"></i>
+      Carregue a Base Governança (aba Analytics)
+    </div>
+    <div id="ana-content" style="display: none"></div>
+  </section>
+
+</main>
+
+<button id="btn-top" class="btn-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Voltar ao topo">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/>
+    <polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<!-- Bibliotecas externas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+
+<script>
+(function () {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx    = canvas.getContext('2d');
+
+  const N      = 95;      // número de partículas
+  const LINK   = 160;     // distância máxima para traçar linha (px)
+  const LINK2  = LINK * LINK;
+  const MRAD   = 200;     // raio de influência do cursor (px)
+  const MRAD2  = MRAD * MRAD;
+  const VMAX   = 0.55;    // velocidade máxima natural
+  const PUSH   = 0.5;     // intensidade do empurrão do cursor
+
+  // Cores da paleta Saint-Gobain
+  const DOT_CLR  = 'rgba(1, 149, 214, 0.7)';    // azul accent
+  const LINE_CLR = [15, 82, 153];                 // azul marca (para rgba dinâmico)
+
+  let W, H;
+  const mouse = { x: -999, y: -999 };
+  const pts   = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function init() {
+    pts.length = 0;
+    for (let i = 0; i < N; i++) {
+      pts.push({
+        x:  Math.random() * W,
+        y:  Math.random() * H,
+        vx: (Math.random() - 0.5) * VMAX,
+        vy: (Math.random() - 0.5) * VMAX,
+        r:  Math.random() * 1.8 + 1.2,
+      });
+    }
+  }
+
+  function tick() {
+    ctx.clearRect(0, 0, W, H);
+
+    // ── Atualiza posições ──────────────────────────────────────
+    for (const p of pts) {
+      const dx   = p.x - mouse.x;
+      const dy   = p.y - mouse.y;
+      const dist2 = dx * dx + dy * dy;
+
+      // Repulsão suave do cursor
+      if (dist2 < MRAD2 && dist2 > 0) {
+        const dist  = Math.sqrt(dist2);
+        const force = (1 - dist / MRAD) * PUSH;
+        p.vx += (dx / dist) * force;
+        p.vy += (dy / dist) * force;
+      }
+
+      // Amortecimento leve para manter velocidade controlada
+      p.vx *= 0.98;
+      p.vy *= 0.98;
+
+      // Limita velocidade máxima
+      const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+      if (spd > VMAX * 4) { p.vx = p.vx / spd * VMAX * 4; p.vy = p.vy / spd * VMAX * 4; }
+
+      p.x += p.vx;
+      p.y += p.vy;
+
+      // Rebate nas bordas em vez de teleportar (evita flash de linha)
+      if (p.x < 0)  { p.x = 0;  p.vx *= -1; }
+      if (p.x > W)  { p.x = W;  p.vx *= -1; }
+      if (p.y < 0)  { p.y = 0;  p.vy *= -1; }
+      if (p.y > H)  { p.y = H;  p.vy *= -1; }
+    }
+
+    // ── Linhas entre partículas próximas ───────────────────────
+    for (let i = 0; i < N; i++) {
+      for (let j = i + 1; j < N; j++) {
+        const dx   = pts[i].x - pts[j].x;
+        const dy   = pts[i].y - pts[j].y;
+        const dist2 = dx * dx + dy * dy;
+        if (dist2 < LINK2) {
+          const op = (1 - dist2 / LINK2) * 0.28; // opacidade inversamente proporcional à distância
+          ctx.strokeStyle = `rgba(${LINE_CLR[0]},${LINE_CLR[1]},${LINE_CLR[2]},${op.toFixed(3)})`;
+          ctx.lineWidth   = 1;
+          ctx.beginPath();
+          ctx.moveTo(pts[i].x, pts[i].y);
+          ctx.lineTo(pts[j].x, pts[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // ── Pontos ────────────────────────────────────────────────
+    ctx.fillStyle = DOT_CLR;
+    for (const p of pts) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  window.addEventListener('resize',    () => { resize(); init(); });
+
+  resize();
+  init();
+  tick();
+})();
+</script>
+
+</body>
+</html>
