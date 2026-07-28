@@ -32,9 +32,10 @@ export function definirPeriodoRapido(mode){
     from = new Date(year, month, 1);
     to   = new Date(year, month+1, 0); // último dia do mês atual
   } else if(mode==='quarter'){
-    const quarter = Math.floor(month/3);  // 0,1,2,3
-    from = new Date(year, quarter*3, 1);
-    to   = new Date(year, quarter*3+3, 0); // último dia do trimestre
+    // "Trimestre" = últimos 3 meses corridos (sempre olhando pra trás), não o
+    // trimestre civil — senão no início de um trimestre ele quase não difere de "Este mês".
+    from = new Date(year, month-2, 1); // 1º dia do mês de 2 meses atrás
+    to   = HOJE;                       // até hoje, nunca inclui datas futuras
   } else if(mode==='year'){
     from = new Date(year, 0, 1);
     to   = new Date(year, 11, 31);
