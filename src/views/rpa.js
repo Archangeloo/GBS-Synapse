@@ -288,19 +288,33 @@ export function renderizarStatusRPA(){
 
   document.getElementById('rpa-visao-kpis').innerHTML = htmlKpis;
   renderizarGraficosPendentes();
+
+  // mantém a lista de Chamados sincronizada com o mesmo filtro de status/área,
+  // pra dar sempre uma forma de auditar visualmente os números dos KPIs acima
+  renderizarListaRPA();
 }
 
 /*
  * renderizarListaRPA() — renderiza a lista paginada de chamados.
- * Aplica o filtro global de data + busca de texto.
+ * Aplica o filtro global de data + o filtro local de status/área (Visão geral) + busca de texto,
+ * pra permitir conferir manualmente as linhas por trás dos números dos KPIs/gráficos.
  * Mostra até 1000 chamados; avisa se houver mais.
  */
 export function renderizarListaRPA(){
-  const {kept: chamados} = filtrarPorPeriodo(App.chamadosRPA);
+  const {kept: chamadosPeriodo} = filtrarPorPeriodo(App.chamadosRPA);
+  const faseSelecionada = document.getElementById('rpa-fs')?.value || '';
+  const areaSelecionada = document.getElementById('rpa-fa')?.value || '';
+  let chamados = faseSelecionada ? chamadosPeriodo.filter(r => r.fase === faseSelecionada) : chamadosPeriodo;
+  if(areaSelecionada) chamados = chamados.filter(r => r.area === areaSelecionada);
   const query = (document.getElementById('rsearch')?.value||'').toLowerCase();
   const vis = query ? chamados.filter(r=>(r.codigo+r.processo+r.solicitante+r.problema).toLowerCase().includes(query)) : chamados;
   const cnt = document.getElementById('rlista-count');
-  if(cnt) cnt.textContent = vis.length+' chamados';
+  if(cnt){
+    const partes = [];
+    if(faseSelecionada) partes.push(`fase "${faseSelecionada}"`);
+    if(areaSelecionada) partes.push(`área "${areaSelecionada}"`);
+    cnt.textContent = partes.length ? `${vis.length} chamados em ${partes.join(' · ')}` : `${vis.length} chamados`;
+  }
   let linhasChamados = vis.slice(0,1000).map(r => {
     const concl = r.fase.toLowerCase().includes('conclu');
     return `<tr>
