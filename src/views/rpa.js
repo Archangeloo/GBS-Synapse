@@ -52,12 +52,16 @@ export function construirChamadosRPA(){
       </div></div>`;
   }
 
-  // Filtro local de status (fase) — opções derivadas das fases presentes nos dados
+  // Filtro local de status (fase) e de área — opções derivadas dos dados presentes
   const fasesDisp = [...new Set(chamados.map(r=>r.fase).filter(Boolean))].sort();
+  const areasDisp = [...new Set(chamados.map(r=>r.area).filter(Boolean))].sort();
   const filtroStatus = `<div class="filters" style="margin-bottom:14px">
     <label>Status do chamado</label>
     <select id="rpa-fs" onchange="renderizarStatusRPA()"><option value="">Todos</option>
       ${fasesDisp.map(f=>`<option>${f}</option>`).join('')}</select>
+    <label>Área</label>
+    <select id="rpa-fa" onchange="renderizarStatusRPA()"><option value="">Todas</option>
+      ${areasDisp.map(a=>`<option>${a}</option>`).join('')}</select>
     <span style="font-size:11px;color:var(--ink4);margin-left:auto" id="rpa-fs-count"></span>
   </div>`;
 
@@ -217,7 +221,9 @@ function construirAbaLista(chamados, total, venc) {
 export function renderizarStatusRPA(){
   const {kept: chamadosFiltrados} = filtrarPorPeriodo(App.chamadosRPA);   // já filtrado pelo período global
   const faseSelecionada = document.getElementById('rpa-fs')?.value || '';
-  const chamados = faseSelecionada ? chamadosFiltrados.filter(r => r.fase === faseSelecionada) : chamadosFiltrados;
+  const areaSelecionada = document.getElementById('rpa-fa')?.value || '';
+  let chamados = faseSelecionada ? chamadosFiltrados.filter(r => r.fase === faseSelecionada) : chamadosFiltrados;
+  if(areaSelecionada) chamados = chamados.filter(r => r.area === areaSelecionada);
 
   const total      = chamados.length;
   const venc       = chamados.filter(r => r.vencido).length;
@@ -228,7 +234,12 @@ export function renderizarStatusRPA(){
   const procUnicos = new Set(chamados.map(r => r.processo).filter(p => p && p !== '(sem processo)')).size;
 
   const cnt = document.getElementById('rpa-fs-count');
-  if(cnt) cnt.textContent = faseSelecionada ? `${total} chamados em "${faseSelecionada}"` : `${total} chamados`;
+  if(cnt){
+    const partes = [];
+    if(faseSelecionada) partes.push(`fase "${faseSelecionada}"`);
+    if(areaSelecionada) partes.push(`área "${areaSelecionada}"`);
+    cnt.textContent = partes.length ? `${total} chamados em ${partes.join(' · ')}` : `${total} chamados`;
+  }
 
   let htmlKpis = `<div class="krow k5">
     <div class="kpi">${iconeKpi('ticket')}<div class="knum">${total}</div><div class="klbl">Total chamados</div><div class="ksub">${procUnicos} processos distintos</div></div>
