@@ -84,7 +84,7 @@ function gerarDashboard(){
 
   // 5. Revela o filtro de data e o botão de exportar (ficam escondidos até o primeiro generate)
   const df = document.getElementById('date-filter');
-  if(df) df.style.display = 'flex';
+  if(df){ df.style.display = 'flex'; df.dataset.revelado = 'true'; }
   const bp = document.getElementById('btn-print');
   if(bp) bp.style.display = 'flex';
 

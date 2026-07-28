@@ -6,17 +6,24 @@ import { _animarNumero } from './charts.js';
 // Troca entre as abas principais do dashboard.
 // Funciona alternando a classe 'active' no item de navegação e na seção correspondente.
 export function definirNav(id){
-  ['upload','gov','proj','mel','rpa','ana'].forEach(n => {
-    const ni = document.getElementById('nav-'+n);
-    const pg = document.getElementById('page-'+n);
-    if(ni) ni.classList.toggle('active', n === id);
-    if(pg) pg.classList.toggle('active', n === id);
+  ['upload','gov','proj','mel','rpa','ana'].forEach(nomeAba => {
+    const itemDeNavegacao = document.getElementById('nav-'+nomeAba);
+    const paginaDaAba     = document.getElementById('page-'+nomeAba);
+    if(itemDeNavegacao) itemDeNavegacao.classList.toggle('active', nomeAba === id);
+    if(paginaDaAba)     paginaDaAba.classList.toggle('active', nomeAba === id);
   });
+  // Aba Pipefy Melhorias não usa o filtro global de data (ela tem sua própria
+  // lógica de período com backlog sempre incluído — ver comentário no topo de views/mel.js).
+  // Esconde o controle nessa aba e mostra normalmente nas demais.
+  const filtroDataElemento = document.getElementById('date-filter');
+  if(filtroDataElemento && filtroDataElemento.dataset.revelado === 'true'){
+    filtroDataElemento.style.display = id === 'mel' ? 'none' : 'flex';
+  }
   // Anima os KPIs da aba que acabou de ficar visível
-  const pg = document.getElementById('page-'+id);
-  if(pg) pg.querySelectorAll('.knum').forEach(el => {
-    delete el.dataset.an;
-    _animarNumero(el);
+  const paginaAtiva = document.getElementById('page-'+id);
+  if(paginaAtiva) paginaAtiva.querySelectorAll('.knum').forEach(elementoKpi => {
+    delete elementoKpi.dataset.an;
+    _animarNumero(elementoKpi);
   });
 }
 
