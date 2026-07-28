@@ -75,8 +75,7 @@ export function interpretarRPA(){
       responsaveis: String(obterValorColuna(r, ['Responsáveis','Responsável']))
         .split(',').map(s=>s.trim()).filter(Boolean),
       criado,
-      dataInicio: criado,                            // Criado em → início do intervalo
-      dataFim:    paraData(obterValorColuna(r, ['Finalizado em'])), // Finalizado em → fim do intervalo
+      dataFim:    paraData(obterValorColuna(r, ['Finalizado em'])), // Finalizado em → só exibição, não entra no filtro de período
       mes: paraChaveAnoMes(criado),
       finalizado: paraData(obterValorColuna(r, ['Finalizado em'])), // alias pra exibição
       vencido:    venc,

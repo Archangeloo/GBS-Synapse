@@ -61,34 +61,46 @@ export function ativoNoIntervalo(ini, fim){
 /*
  * Aplica o filtro de data a um array inteiro.
  * Retorna: { kept: [...itens que passaram], noDate: N (quantidade sem data) }
- * Para itens que têm dataInicio (ex: Pipefy, Analytics), usa a lógica de "ativo no
+ *
+ * Chamados RPA (têm o campo 'criado'): usa SEMPRE a data de abertura, mesmo pra
+ * chamados já concluídos. Nunca considera a data de conclusão — por isso um chamado
+ * aberto num mês e concluído bem depois continua contando pro mês em que foi aberto.
+ *
+ * Demais itens com dataInicio (ex: Pipefy, Analytics): usa a lógica de "ativo no
  * período" (intervalo início→fim) — MAS só enquanto o item ainda está em
  * andamento. Um item já concluído (codigoStatus==='done') tem uma data de conclusão real
  * e fixa (dataFim); nesse caso o filtro passa a checar só se ESSA data cai no
  * período, com dataNoIntervalo. Se usássemos o intervalo inteiro também para
  * concluídos, um item que só passou pelo período em desenvolvimento e fechou
  * bem depois apareceria como "concluído no período" de forma enganosa.
- * Para os demais itens (sem dataInicio), usa a data única de dataReferencia.
+ *
+ * Para os demais itens (sem dataInicio nem criado), usa a data única de dataReferencia.
  * Os itens sem data não são perdidos — ficam fora do recorte e o número é
  * exibido na nota de transparência da interface.
  */
-export function filtrarPorPeriodo(arr){
-  if(App.periodoFiltro.modo === 'all') return { kept: arr, noDate: 0 };
-  const kept = [], noDate = [];
-  arr.forEach(x => {
-    if(x.dataInicio !== undefined && x.codigoStatus !== 'done'){
+export function filtrarPorPeriodo(itens){
+  if(App.periodoFiltro.modo === 'all') return { kept: itens, noDate: 0 };
+  const itensDentroDoPeriodo = [], itensSemData = [];
+  itens.forEach(item => {
+    if(item.criado !== undefined){
+      // Chamados RPA: só essa fonte tem o campo 'criado' — usa sempre a data de
+      // abertura, mesmo pra chamados já concluídos (nunca a data de conclusão).
+      const dataDeAbertura = item.criado;
+      if(!dataDeAbertura) itensSemData.push(item);
+      else if(dataNoIntervalo(dataDeAbertura)) itensDentroDoPeriodo.push(item);
+    } else if(item.dataInicio !== undefined && item.codigoStatus !== 'done'){
       // ainda em andamento: usa o intervalo início→fim (ativoNoIntervalo)
-      const rangeStatus = ativoNoIntervalo(x.dataInicio, x.dataFim);
-      if(rangeStatus === 'nodate') noDate.push(x);
-      else if(rangeStatus === 'in') kept.push(x);
+      const statusDoIntervalo = ativoNoIntervalo(item.dataInicio, item.dataFim);
+      if(statusDoIntervalo === 'nodate') itensSemData.push(item);
+      else if(statusDoIntervalo === 'in') itensDentroDoPeriodo.push(item);
     } else {
       // já concluído (ou sem conceito de intervalo): data única de referência
-      const date = dataReferencia(x);
-      if(!date) noDate.push(x);
-      else if(dataNoIntervalo(date)) kept.push(x);
+      const dataDeReferencia = dataReferencia(item);
+      if(!dataDeReferencia) itensSemData.push(item);
+      else if(dataNoIntervalo(dataDeReferencia)) itensDentroDoPeriodo.push(item);
     }
   });
-  return { kept, noDate: noDate.length };
+  return { kept: itensDentroDoPeriodo, noDate: itensSemData.length };
 }
 
 /*
